@@ -25,11 +25,11 @@ class UserService {
     if (verifyEmail) {
       return { status: 409, message: "Email already in use!" };
     }
-    
+
     try {
       const createUser = await repository.user.create({
         data: {
-          name: user.username,
+          name: user.name,
           email: user.email,
           username: user.username,
           password: user.password,

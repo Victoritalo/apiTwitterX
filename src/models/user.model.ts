@@ -15,7 +15,7 @@ export class User {
     return this._id;
   }
 
-  public get nome() {
+  public get name() {
     return this._name;
   }
 
@@ -41,23 +41,3 @@ export class User {
     };
   }
 }
-
-// model User {
-//     id       String  @id @default(uuid()) @db.Uuid
-//     name     String  @db.VarChar(50)
-//     email    String  @unique @db.VarChar(50)
-//     username String  @unique @db.VarChar(15)
-//     password String  @db.VarChar(50)
-//     token    String?
-
-//     tweet     Tweet[]
-//     like      Like[]
-//     following Follow[] @relation("Following")
-//     followers Follow[] @relation("Followers")
-//     reply     Reply[]
-
-//     createdAt DateTime @default(now()) @map("created_at")
-//     updatedAt DateTime @updatedAt @map("updated_at")
-
-//     @@map("users")
-//   }
