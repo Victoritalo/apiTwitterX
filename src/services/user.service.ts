@@ -11,11 +11,7 @@ class UserService {
     });
 
     if (verifyUsername) {
-      const verifyUsernameReturn = {
-        status: 409,
-        message: "Username already in use!",
-      };
-      return verifyUsernameReturn;
+      return { status: 409, message: "Username already in use!", data: null };
     }
 
     const verifyEmail = await repository.user.findUnique({
@@ -23,7 +19,7 @@ class UserService {
     });
 
     if (verifyEmail) {
-      return { status: 409, message: "Email already in use!" };
+      return { status: 409, message: "Email already in use!", data: null };
     }
 
     try {
@@ -36,9 +32,13 @@ class UserService {
           id: user.id,
         },
       });
-      return createUser;
+      return {
+        status: 201,
+        message: "User created successfully!",
+        data: createUser,
+      };
     } catch (error: any) {
-      return null;
+      return { status: 500, message: "Something went wrong!", data: null };
     }
   }
 }
