@@ -11,6 +11,4 @@ export function emptyFieldError(res: Response) {
   });
 }
 
-export function conflictError(res: Response, message: string) {
-  return res.status(409).send({ error: "Conflict", message });
-}
+
