@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String  @id @default(uuid()) @db.Uuid
+  name     String  @db.VarChar(50)
+  email    String  @unique @db.VarChar(50)
+  username String  @unique @db.VarChar(15)
+  password String  @db.VarChar(80)
+  token    String? @unique
+
+  tweet     Tweet[]
+  like      Like[]
+  following Follow[] @relation("Following")
+  followers Follow[] @relation("Followers")
+  reply     Reply[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Tweet {
+  id      String @id @default(uuid()) @db.Uuid
+  idUser  String @map("id_user") @db.Uuid
+  content String @db.VarChar(140)
+
+  user  User    @relation(fields: [idUser], references: [id])
+  like  Like[]
+  reply Reply[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("tweets")
+}
+
+model Follow {
+  idUserFollower String @map("id_user_follower") @db.Uuid
+  idUserFollowed String @map("id_user_followed") @db.Uuid
+
+  following User @relation("Following", fields: [idUserFollower], references: [id])
+  followers User @relation("Followers", fields: [idUserFollowed], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@id([idUserFollower, idUserFollowed])
+  @@map("follow")
+}
+
+model Like {
+  id      String @id @default(uuid()) @db.Uuid
+  idUser  String @map("id_user") @db.Uuid
+  idTweet String @map("id_tweet") @db.Uuid
+
+  user  User  @relation(fields: [idUser], references: [id])
+  tweet Tweet @relation(fields: [idTweet], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("likes")
+}
+
+model Reply {
+  id      String @id @default(uuid()) @db.Uuid
+  idUser  String @map("id_user") @db.Uuid
+  idTweet String @map("id_tweet") @db.Uuid
+  content String @db.VarChar(140)
+
+  user  User  @relation(fields: [idUser], references: [id])
+  tweet Tweet @relation(fields: [idTweet], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("replies")
+}
