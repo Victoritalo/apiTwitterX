@@ -10,5 +10,3 @@ export function emptyFieldError(res: Response) {
     message: "Incomplete fields. Please fill out all the required information.",
   });
 }
-
-

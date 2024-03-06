@@ -1,12 +1,11 @@
 import { repository } from "../database/prisma.repository";
-// import { ResponseDto } from "../dtos/response.dto";
-import { CreateUserDTO } from "../dtos/user.dto";
+import { ResultDTO } from "../contract/result.contract";
+import { CreateUserDTO, UpdateUserDto } from "../contract/user.contract";
 import { User } from "../models/user.model";
-import { conflictError, notFoundError } from "./../util/service.helper";
 import bcrypt from "bcrypt";
 
 class UserService {
-  public async createUser(data: CreateUserDTO) {
+  public async createUser(data: CreateUserDTO): Promise<ResultDTO> {
     const user = new User(data.name, data.email, data.username, data.password);
 
     const verifyUsername = await repository.user.findUnique({
@@ -14,7 +13,7 @@ class UserService {
     });
 
     if (verifyUsername) {
-      return conflictError(409, "Username already in use!", null);
+      return { ok: false, status: 409, message: "Username already in use!" };
     }
 
     const verifyEmail = await repository.user.findUnique({
@@ -22,12 +21,11 @@ class UserService {
     });
 
     if (verifyEmail) {
-      return conflictError(409, "Email already in use!", null);
+      return { ok: false, status: 409, message: "Email already in use!" };
     }
 
     try {
-      const genSalt = await bcrypt.genSalt(10);
-      const hashPassword = await bcrypt.hash(user.password, genSalt);
+      const hashPassword = await bcrypt.hash(user.password, 10);
 
       const createUser = await repository.user.create({
         data: {
@@ -40,33 +38,112 @@ class UserService {
       });
 
       return {
+        ok: true,
         status: 201,
         message: "User created successfully!",
         data: createUser,
       };
-
     } catch (error: any) {
-      return { status: 500, message: "Something went wrong!", data: error };
+      return {
+        ok: false,
+        status: 500,
+        message: "Something went wrong!",
+        data: error,
+      };
     }
   }
 
-  
-
-  public async deleteUser(id: string) {
-    const user = await repository.user.findUnique({ where: { id } });
-
-    if (!user) return notFoundError(404, "User not found!", null);
-
+  public async bringUserData(username: string, password: string) {
     try {
-      await repository.user.delete({ where: { id } });
-      return {
-        status: 201,
-        message: "Deletion of user completed successfully!",
-        data: user.username,
-      };
+      const user = await repository.user.findUnique({
+        where: { username: username },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          password: true,
+          token: true,
+        },
+      });
+      if (!user)
+        return { status: 401, message: "Wrong credentials!", data: null };
+
+      const verifyPassword = await bcrypt.compare(password, user!.password);
+      if (!verifyPassword) {
+        return false;
+      } else {
+        return user;
+      }
     } catch (error: any) {
       return { status: 500, message: "Something went wrong!", data: null };
     }
+  }
+
+  public async bringUserToken(token: string) {
+    const user = repository.user.findUnique({ where: { token: token } });
+    return user;
+  }
+
+  public async updateUser(data: UpdateUserDto): Promise<ResultDTO> {
+    try {
+      const user = await repository.user.findUnique({
+        where: { id: data.id },
+        select: {
+          id: true,
+          email: true,
+          username: true,
+          password: true,
+          token: true,
+        },
+      });
+
+      if (!user) return { ok: false, status: 404, message: "User not found!" };
+
+      const hashPassword = await bcrypt.hash(data.password, 10);
+      const updateUser = await repository.user.update({
+        where: { id: data.id },
+        data: {
+          name: data.name,
+          email: data.email,
+          username: data.username,
+          password: hashPassword,
+          token: data.token,
+        },
+      });
+      return {
+        ok: true,
+        status: 200,
+        message: "Information updated successfully!",
+        data: updateUser,
+      };
+    } catch (error: any) {
+      return {
+        ok: false,
+        status: 500,
+        message: "Something went wrong!",
+        data: null,
+      };
+    }
+  }
+
+  public async deleteUser(id: string): Promise<ResultDTO> {
+    const user = await repository.user.findUnique({ where: { id } });
+
+    if (!user) return { ok: false, status: 404, message: "User not found!" };
+
+    await repository.user.delete({ where: { id } });
+
+    return {
+      ok: true,
+      status: 201,
+      message: "User successfully deleted",
+      data: user.username,
+    };
+
+    // try {
+    // } catch (error: any) {
+    //   return { status: 500, message: "Something went wrong!", data: null };
+    // }
   }
 }
 
