@@ -13,6 +13,6 @@ app.use(cors());
 app.use("/user", UserRoutes());
 app.use("/auth", AuthRoutes());
 
-app.listen(3333, () => {
-  console.log("API is running");
+app.listen(process.env.PORT, () => {
+  console.log("API is running " + process.env.PORT);
 });
